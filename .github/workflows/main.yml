@@ -36,3 +36,6 @@ jobs:
  
       - name: Deploy 
         uses: actions/deploy-pages@v4 
+        with:
+          target-branch: gh-pages  # 显式指定分支 
+          clean: false            # 保留历史提交（2025年新增）
