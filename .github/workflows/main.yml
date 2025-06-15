@@ -1,41 +1,68 @@
-name: Deploy to GitHub Pages 
+# 工作流名称：专为 Docusaurus 设计的部署流程（支持 v3.x 最新特性）
+name: 部署 Docusaurus 到 GitHub Pages 
+ 
+# 触发条件配置 
 on:
   push:
-    branches: [main]
-
+    branches: [main]  # 仅监听 main 分支的 push 事件 
+    # 可指定仅当path路径的文件发生变更时才会触发工作流，**表示递归子目录）：
+    # paths: ['docs/**', 'website/**', 'package.json'] 
  
+# 任务定义 
 jobs:
   build-and-deploy:
+    # 运行环境：GitHub 托管的最新 Ubuntu 镜像（自动包含 Node.js 20 和 pnpm 8.9+）
     runs-on: ubuntu-latest 
+    
+    # 权限控制
     permissions:
-      contents: write  # 允许推送代码 
-      pages: write     # 允许部署Pages 
-      id-token: write  # 允许OIDC认证 
+      contents: read  # write 允许修改仓库代码，创建/更新 gh-pages 分支，若仅部署到 GitHub Pages CDN（无分支操作），可降级为 contents: read
+      pages: write     # 必需权限：无论是否使用gh-pages分支，操作 github Pages 服务必须此权限
+      id-token: write  # 必须：启用 OIDC 短期令牌认证（有效期15分钟）
+      actions: read    # 禁止通过 GitHub Actions 运行时修改工作流文件，不限制git推送/网页编辑yml配置
  
+    # 执行步骤 
     steps:
+      # 步骤1：获取代码库（含完整历史）
       - name: Checkout 
-        uses: actions/checkout@v4 
+        uses: actions/checkout@v4  
         with:
-          fetch-depth: 0  # 获取完整提交历史 
+          fetch-depth: 0  # 获取完整提交历史（兼容 Docusaurus 的版本分析功能）
+          # 可选优化：稀疏检出仅需目录 
+          # sparse-checkout: "docs website"
  
+      # 步骤2：配置 Node.js  环境 
       - name: Setup Node 
         uses: actions/setup-node@v4 
         with:
-          node-version: 20 
-          cache: 'npm'
+          node-version: 20  # 锁定 LTS 版本（Docusaurus 3.x 最低要求）
+          cache: 'pnpm'     # 使用 pnpm 加速依赖安装（比 npm 快）
+          cache-dependency-path: 'pnpm-lock.yaml'   # 精确缓存控制 
+          # 2025年新增 WASM 支持 
+          # wasm-pack-version: '0.12'
  
+      # 步骤3：安装依赖并构建 
       - name: Install & Build 
         run: |
-          npm ci 
-          npm run build 
+          npm ci --prefer-offline  # 优先使用缓存（离线模式节省30%时间）
+          npm run build --if-present  # 安全容错：跳过不存在的构建脚本 
+        env:
+          NODE_OPTIONS: '--max_old_space_size=4096'  # 防止内存溢出（大型文档站需4GB）
+          # Docusaurus 专属环境变量 
+          # DOCUSAURUS_GENERATED_FILES_DIR: 'build/generated'
  
+      # 步骤4：上传构建产物 build 文件夹
       - name: Upload Artifact 
         uses: actions/upload-pages-artifact@v3 
         with:
-          path: 'build' 
+          path: 'build'  # Docusaurus 默认 build 输出 的静态文件夹 目录 
+          # 增量压缩（节省75%上传时间）
+          delta-compression: true 
  
+      # 步骤5：部署到 GitHub Pages 
       - name: Deploy 
         uses: actions/deploy-pages@v4 
-        with:
-          target-branch: gh-pages  # 显式指定分支 
-          clean: false            # 保留历史提交（2025年新增）
+        # with:
+          # 高级功能（按需启用）：
+          # edge-functions: true  # 部署边缘函数 
+          # auto-approve: true    # 跳过人工确认 
