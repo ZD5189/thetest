@@ -21,7 +21,12 @@ jobs:
           cache: yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+          run: |
+            if [ ! -f "yarn.lock"  ]; then 
+              yarn install 
+            else 
+              yarn install --frozen-lockfile 
+            fi
       - name: Build website
         run: yarn build
 
