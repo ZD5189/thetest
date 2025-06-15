@@ -38,6 +38,7 @@ jobs:
         with:
           node-version: 20  # 锁定 LTS 版本（Docusaurus 3.x 最低要求）
           cache: 'npm'
+          cache-dependency-path: 'docs/package-lock.json'  
           # cache: 'pnpm'     # 使用 pnpm 加速依赖安装（比 npm 快，但是必须要保证环境上可用pnpm）
           # cache-dependency-path: 'pnpm-lock.yaml'   # 精确缓存控制 
           # 2025年新增 WASM 支持 
