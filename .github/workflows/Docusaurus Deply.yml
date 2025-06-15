@@ -7,6 +7,7 @@ on:
     branches: [main]  # 仅监听 main 分支的 push 事件 
     # 可指定仅当path路径的文件发生变更时才会触发工作流，**表示递归子目录）：
     # paths: ['docs/**', 'website/**', 'package.json'] 
+    paths: ['docs/**']
  
 # 任务定义 
 jobs:
@@ -23,13 +24,13 @@ jobs:
  
     # 执行步骤 
     steps:
-      # 步骤1：获取代码库（含完整历史）
+      # 步骤1：获取代码库
       - name: Checkout 
         uses: actions/checkout@v4  
         with:
-          fetch-depth: 0  # 获取完整提交历史（兼容 Docusaurus 的版本分析功能）
-          # 可选优化：稀疏检出仅需目录 
-          # sparse-checkout: "docs website"
+          fetch-depth: 0  # 0表示获取完整提交历史（兼容 Docusaurus 的版本分析功能）
+          # 检出仅需的docs目录 
+          sparse-checkout: "docs"
 
       # 步骤2：配置 Node.js  环境 
       - name: Setup Node 
@@ -43,7 +44,8 @@ jobs:
           # wasm-pack-version: '0.12'
 
       # 步骤3：安装依赖并构建 
-      - name: Install & Build 
+      - name: Install & Build
+        working-directory: ./docs  # 进入子目录构建 
         run: |
           npm ci --prefer-offline  # 优先使用缓存（离线模式节省30%时间）
           npm run build --if-present  # 安全容错：跳过不存在的构建脚本 
@@ -56,7 +58,7 @@ jobs:
       - name: Upload Artifact 
         uses: actions/upload-pages-artifact@v3 
         with:
-          path: 'build'  # Docusaurus 默认 build 输出 的静态文件夹 目录 
+          path: 'docs/build'  # Docusaurus 默认 build 输出 的静态文件夹 目录，注意整体都在doc文件夹中 
           # 增量压缩（节省75%上传时间）
           delta-compression: true 
  
