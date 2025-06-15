@@ -33,7 +33,6 @@ jobs:
  
       # 步骤2：配置 Node.js  环境 
       - name: Setup Node 
-        run: npm install -g pnpm@8.9.0  # 2025年推荐稳定版 
         uses: actions/setup-node@v4 
         with:
           node-version: 20  # 锁定 LTS 版本（Docusaurus 3.x 最低要求）
@@ -41,7 +40,9 @@ jobs:
           cache-dependency-path: 'pnpm-lock.yaml'   # 精确缓存控制 
           # 2025年新增 WASM 支持 
           # wasm-pack-version: '0.12'
-      
+          
+        - name: Enable Corepack 
+          run: corepack enable pnpm  # Node.js  16+ 内置工具 
       # 步骤3：安装依赖并构建 
       - name: Install & Build 
         run: |
