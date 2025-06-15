@@ -30,7 +30,9 @@ jobs:
           fetch-depth: 0  # 获取完整提交历史（兼容 Docusaurus 的版本分析功能）
           # 可选优化：稀疏检出仅需目录 
           # sparse-checkout: "docs website"
- 
+      - name: Enable Corepack 
+        run: corepack enable pnpm  # Node.js  16+ 内置工具 
+          
       # 步骤2：配置 Node.js  环境 
       - name: Setup Node 
         uses: actions/setup-node@v4 
@@ -41,9 +43,6 @@ jobs:
           # 2025年新增 WASM 支持 
           # wasm-pack-version: '0.12'
 
-      - name: Enable Corepack 
-        run: corepack enable pnpm  # Node.js  16+ 内置工具 
-        
       # 步骤3：安装依赖并构建 
       - name: Install & Build 
         run: |
